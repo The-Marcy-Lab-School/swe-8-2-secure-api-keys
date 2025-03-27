@@ -10,11 +10,14 @@ Refer to the associated [lecture notes](https://marcylabschool.gitbook.io/marcy-
 - [Setup](#setup)
   - [Starter Code](#starter-code)
 - [Grading](#grading)
-- [Part 1 — Create an Environment Variable for the API Key](#part-1--create-an-environment-variable-for-the-api-key)
-- [Part 2 — Create an Endpoint and Controller](#part-2--create-an-endpoint-and-controller)
-- [Part 3 — Update the Frontend React application:](#part-3--update-the-frontend-react-application)
-- [Part 4 — Enable Proxy Requests during development](#part-4--enable-proxy-requests-during-development)
-- [Part 5 — Deploy](#part-5--deploy)
+- [Server Side](#server-side)
+  - [Part 1 — Create an Endpoint and Controller](#part-1--create-an-endpoint-and-controller)
+- [Part 2 — Create an Environment Variable for the API Key](#part-2--create-an-environment-variable-for-the-api-key)
+- [Client Side](#client-side)
+  - [Part 3 — Update the Frontend React application:](#part-3--update-the-frontend-react-application)
+  - [Part 4 — Enable Proxy Requests during development](#part-4--enable-proxy-requests-during-development)
+- [Deployment](#deployment)
+  - [Part 5 — Deploy](#part-5--deploy)
 - [Bonus Challenge!](#bonus-challenge)
 
 ## Setup
@@ -47,7 +50,7 @@ npm i
 npm start
 ```
 
-As you can see, the frontend application tries to use the GIPHY API to show trending gifs of the day, but it's not quite working as it is unauthorized (we get a 401 status code). 
+As you can see, the frontend application tries to use the Giphy API to show trending gifs of the day, but it's not quite working as it is unauthorized (we get a 401 status code). 
 
 Look into the code provided in `frontend` and see why:
 - The `App` component renders the `GifContainer` 
@@ -71,25 +74,29 @@ Your grade on this assignment will be determined by the number of tasks you are 
 
 Feel free to mark these tasks as complete/incomplete, however your instructor will likely modify your tasks when grading.
 
-This assignment has 11 tasks and 1 bonus task:
-- 5 setup tasks
-- 5 server application tasks
+This assignment has 11 requirements and 1 bonus requirement:
+- 4 environment variable requirements
+- 4 server-side requirements
+- 2 client-side requirements
 - 1 deployment task
 
-**Setup Technical Requirements**
+**Environment Variable Requirements**
 
 Before submitting, make sure that these tasks are completed!
 
-- [ ] Has a `server` folder with an `index.js` file and a `package.json` file inside
-- [ ] `package.json` has `express` and `dotenv` installed as dependencies
 - [ ] Environment variables are stored in the `.env` folder
 - [ ] `.env` and `node_modules` are added to a `.gitignore` file
+- [ ] `dotenv` is installed as a dependency
+- [ ] `process.env` is used to access the environment variable
 
-**Server/Frontend Application Technical Requirements**
+**Server-Side Technical Requirements**
 
-- [ ] An `/api/gifs` endpoint exists with a controller. 
-- [ ] The controller for the `/api/gifs` endpoint sends a fetch request to the Giphy API using the API Key from `process.env`
-- [ ] The controller for the `/api/gifs` endpoint sends a response (or an error) back to the client
+- [ ] A `GET /api/gifs` endpoint exists with a controller. 
+- [ ] The controller for the `/api/gifs` endpoint sends a request to the Giphy API using the API key.
+- [ ] If an error occurs when fetching, a `503` status is sent to the client along with the `error` object.
+- [ ] If the Giphy API fetch is successful, the fetched data is sent to the client.
+
+**Client-Side Technical Requirements**
 - [ ] The frontend sends a request to `/api/gifs` instead of directly to the Giphy API
 - [ ] The frontend `vite.config.js` file has been updated to enable proxy requests
 - [ ] Bonus: The `/api/gifs` endpoint can parse the `req.query` parameters to get the search term and make a request to the Giphy API's search endpoint.
@@ -100,78 +107,51 @@ Before submitting, make sure that these tasks are completed!
 
 You got this!
 
-## Part 1 — Create an Environment Variable for the API Key
+## Server Side
+### Part 1 — Create an Endpoint and Controller 
 
-Ultimately, our goal is to send requests to the GIPHY API from our server, not from the frontend. So, let's build the server first. 
+Before you begin, you'll need to log into your [Giphy Developer Dashboard](https://developers.giphy.com/dashboard/) and copy your API Key.
 
-You'll need to log into your [GIPHY Developer Dashboard](https://developers.giphy.com/dashboard/) and copy your API Key.
+The provided server application can currently serve static assets in the `frontend/dist` folder. Your first task is to add a `GET /api/gifs` endpoint and controller that can send a request to the trending endpoint of the Giphy API and respond with the fetched data.
 
-To safely store and use this value, we'll store it as an environment variable and use the `dotenv` module to access it.
-* In the `server` folder, create a `.env` file and store your Giphy API key inside (note that we do not declare any variables here.)
-
-    ```
-    API_KEY="paste-api-key-here"
-    ```
-
-* Then, create a `.gitignore` file with
-
-    ```
-    node_modules/
-    .env
-    ```
-
-* Next, install the `dotenv` module:
-
-    ```sh
-    # Make sure you're in the server directory
-    npm i dotenv
-    ```
-
-* Add the following to your `server/index.js` file to confirm that you can access the `API_KEY` value from the `.env` file:
-
-    ```js
-    const dotenv = require('dotenv');
-
-    // Looks for a `.env` file and loads values onto the process.env object
-    dotenv.config(); 
-
-    console.log(process.env.API_KEY);
-    ```
-
-  Start your server and you should see your API key printed to the console!
-
-Once you've completed these steps, go ahead and add, commit, and push your code. Since you've listed the `.env` file in your `.gitignore` file, it should be hidden from the public repository. Confirm that you CANNOT see the `.env` file in your repository before moving on.
-
-When it comes time to deploy this project, you will be able to provide the server hosting service with environment variables that will be securely stored and hidden from the public but that your server will have access to.
-
-## Part 2 — Create an Endpoint and Controller 
-
-Now that your server has securely stored and can access the API key, create an `/api/gifs` endpoint and controller that can send a request to the trending endpoint of the GIPHY API:
+Use the Giphy API endpoint below:
 
 ```
-https://api.giphy.com/v1/gifs/trending?api_key=${API_KEY}&limit=3&rating=g`
+https://api.giphy.com/v1/gifs/trending?limit=3&rating=g&api_key=API_KEY
 ```
 
-Feel free to use the `handleFetch` helper function provided in the `server/handleFetch.js` file.
+When the server receives a `GET /api/gifs` request, it should:
+- Send the fetched data OR
+- Send an `error` object and a 503 status code if an error occurred
 
-The controller should then take the response and:
-- If an error occurs, send back the `error` object with a `503` status code.
-- Otherwise, send back the fetched data.
+> Tip: A `handleFetch` helper function has been provided for you if you want practice using it!
 
-Test this out by restarting your server: `npm start`
+Test this out by sending a GET request to `http://localhost:8080/api/gifs` in your browser. You should see the fetched gifs with no authorization errors!
 
-Then, send a GET request to `http://localhost:8080/api/gifs` in your browser. You should see the fetched gifs with no authorization errors!
+## Part 2 — Create an Environment Variable for the API Key
 
-## Part 3 — Update the Frontend React application:
+To safely store and use your API key, it should be stored as an environment variable in a `.env` file. We'll then use the `dotenv` module to access it. Do the following:
 
-Now that your server has an `/api/gifs` endpoint, our frontend no longer needs to directly interact with the GIPHY API. Instead, it can just use the `/api/gifs` endpoint and let the server send the request to GIPHY.
+1. In the `server` folder, create a `.env` file and store your Giphy API key inside as an environment variable
+2. Then, create a `.gitignore` file with `.env` listed
+3. Next, install the `dotenv` module as a dependency of the server:
+4. Make sure that your server uses `process.env` to access your API key and does not include the API key anywhere in the source code.
+
+Once you've completed these steps, go ahead and add, commit, and push your code. Since you've listed the `.env` file in your `.gitignore` file, it should be hidden from the public repository. Confirm that you CANNOT see the `.env` file in your repository and that your API key is not listed in any of your source code before moving on.
+
+> When it comes time to deploy this project, you will be able to provide the server hosting service with environment variables that will be securely stored and hidden from the public but that your server will have access to.
+
+## Client Side
+### Part 3 — Update the Frontend React application:
+
+Now that your server has an `/api/gifs` endpoint, our frontend no longer needs to directly interact with the Giphy API. Instead, it can just use the `/api/gifs` endpoint and let the server send the request to Giphy.
 
 Remember, this is what we're looking for:
 
 ![](img/express-api-middleman.svg)
 
 Do the following: 
-* Rewrite the `getTrendingGifs` function in the `giphyAdapters.js` file such that it sends requests to the `/api/gifs` endpoint of the server instead of directly to the GIPHY API.
+* Rewrite the `getTrendingGifs` function in the `giphyAdapters.js` file such that it sends requests to the `/api/gifs` endpoint of the server instead of directly to the Giphy API.
 * Keep your server running and open a separate terminal. Navigate to the `frontend` folder and run `npm run build` to update the `dist/` folder
 * If your server was still running, you should now see the trending gifs being fetched!
 * Open the Developer Tools Network Tab and refresh the page
@@ -180,7 +160,7 @@ Do the following:
 
 ![](./img/localhost-fetch.png)
 
-## Part 4 — Enable Proxy Requests during development
+### Part 4 — Enable Proxy Requests during development
 
 Keep the server running and in your second terminal with the `frontend` directory open, run `npm run dev`. As you recall, this starts a development server which will serve the frontend and update each time it is modified. This development server is much more convenient compared to having to run `npm run build` and then use our own server to view the changes.
 
@@ -214,8 +194,9 @@ export default defineConfig({
 
 Doing so tricks our Vite development server into sending requests that start with `/api` to `http://localhost:8080` instead of `http://localhost:5173`.
 
+## Deployment
 
-## Part 5 — Deploy
+### Part 5 — Deploy
 
 When you're done, push your code to github and [follow these steps to deploy using Render](https://marcylabschool.gitbook.io/marcy-lab-school-docs/how-tos/deploying-using-render). Make sure to add environment variables for your API key! 
 
