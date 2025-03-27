@@ -155,7 +155,7 @@ https://api.giphy.com/v1/gifs/trending?api_key=${API_KEY}&limit=3&rating=g`
 Feel free to use the `handleFetch` helper function provided in the `server/handleFetch.js` file.
 
 The controller should then take the response and:
-- If an error occurs, send back the `error` object with a `404` status code.
+- If an error occurs, send back the `error` object with a `503` status code.
 - Otherwise, send back the fetched data.
 
 Test this out by restarting your server: `npm start`
